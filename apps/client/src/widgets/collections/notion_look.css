@@ -424,3 +424,89 @@ body.desktop .ck-widget.include-note:has(.note-list-widget):not(.ck-widget_selec
     .promoted-attribute-cell .tn-field,
     .promoted-attribute-cell .input-group { min-width: 0; }
 }
+
+/* ---------- Board: Notion's columns and cards ---------- */
+.board-view {
+    .board-column {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .board-column > h3 {
+        font-size: 14px;
+        font-weight: 500;
+        gap: 6px;
+        padding-inline: 2px;
+        background: transparent;
+
+        /* The column's value as the option chip it is. */
+        > .title {
+            background: var(--nl-c1-bg);
+            color: var(--nl-c1-fg);
+            border-radius: 3px;
+            padding: 0 7px;
+            line-height: 22px;
+        }
+
+        > .counter-badge {
+            background: transparent;
+            color: var(--nl-faint);
+            font-weight: 400;
+            min-width: 0;
+        }
+
+        /* The default ring says nothing; an icon picked for the column stays. */
+        .column-icon:has(.bx-circle) { display: none; }
+        > .column-menu { color: var(--nl-faint); }
+    }
+
+    .board-note {
+        background: var(--main-background-color);
+        border: 0;
+        border-radius: 6px;
+        box-shadow: 0 0 0 1px var(--nl-line), 0 2px 4px color-mix(in srgb, var(--main-text-color) 6%, transparent);
+        padding: 8px 10px;
+
+        &:hover { background: color-mix(in srgb, var(--main-text-color) 2%, var(--main-background-color)); }
+
+        .title .text { font-weight: 500; font-size: 14px; color: var(--nl-text); }
+        .title .icon { color: var(--nl-faint); }
+        .edit-icon { color: var(--nl-faint); }
+
+        .user-attributes { gap: 4px; margin-top: 6px; }
+
+        .user-attribute {
+            background: var(--nl-c0-bg);
+            color: var(--nl-c0-fg);
+            border: 0;
+            border-radius: 3px;
+            padding: 0 6px;
+            font-size: 12px;
+            line-height: 20px;
+
+            strong { font-weight: 400; }
+            .tn-icon { color: var(--nl-muted); }
+        }
+    }
+
+    .board-new-item {
+        color: var(--nl-faint);
+        background: transparent;
+        border: 0;
+        font-size: 14px;
+
+        &:hover { background: var(--nl-hover); color: var(--nl-muted); }
+    }
+}
+
+/* A boolean property names itself after its box; in the property list the name goes first. */
+.promoted-attributes-widget .promoted-attribute-cell:has(.tn-checkbox) {
+    > label { grid-column: 1; grid-row: 1; }
+    > div { grid-column: 2; grid-row: 1; padding-inline: 8px; }
+}
+
+/* CKEditor's "insert a paragraph before/after" buttons on an included collection: only with the
+   widget selected, or pointed at on desktop. */
+.ck-widget.include-note:has(.note-list-widget):not(.ck-widget_selected) .ck-widget__type-around { opacity: 0; }
+body.desktop .ck-widget.include-note:has(.note-list-widget):hover .ck-widget__type-around { opacity: 1; }

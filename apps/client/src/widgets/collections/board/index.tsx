@@ -1,4 +1,5 @@
 import "./index.css";
+import "../notion_look.css";
 
 import clsx from "clsx";
 
