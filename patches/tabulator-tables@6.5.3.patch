@@ -1,0 +1,87 @@
+diff --git a/dist/js/tabulator_esm.mjs b/dist/js/tabulator_esm.mjs
+index 7a95d901b47ba68bb8fdb1e191d61658eaa14509..90401395aca61ab2d6b628efd7a19aa862d58a7f 100644
+--- a/dist/js/tabulator_esm.mjs
++++ b/dist/js/tabulator_esm.mjs
+@@ -1,3 +1,7 @@
++// [trilium] Touch tuning for row/column moving, see MoveRows/MoveColumns bindTouchEvents.
++const TOUCH_HOLD_PERIOD = 500;
++const TOUCH_SLOP = 10;
++
+ /* Tabulator v6.5.3 (c) Oliver Folkerd 2026 */
+ class CoreFeature{
+ 
+@@ -15158,12 +15162,15 @@ class MoveColumns extends Module{
+ 	}
+ 	
+ 	bindTouchEvents(column){
+-		var colEl = column.getElement(),
++		var touchStartX = 0, touchStartY = 0, colEl = column.getElement(),
+ 		startXMove = false, //shifting center position of the cell
+ 		nextCol, prevCol, nextColWidth, prevColWidth, nextColWidthLast, prevColWidthLast;
+ 		
+ 		colEl.addEventListener("touchstart", (e) => {
++			touchStartX = e.touches[0].pageX;
++			touchStartY = e.touches[0].pageY;
+ 			this.checkTimeout = setTimeout(() => {
++				this.checkTimeout = null;
+ 				this.touchMove = true;
+ 				nextCol = column.nextColumn();
+ 				nextColWidth = nextCol ? nextCol.getWidth()/2 : 0;
+@@ -15174,11 +15181,18 @@ class MoveColumns extends Module{
+ 				startXMove = false;
+ 				
+ 				this.startMove(e, column);
+-			}, this.checkPeriod);
++			}, Math.max(this.checkPeriod, TOUCH_HOLD_PERIOD));
+ 		}, {passive: true});
+ 		
+ 		colEl.addEventListener("touchmove", (e) => {
+ 			var diff, moveToCol;
++
++			// [trilium] A finger that travels before the hold period is up is scrolling, not
++			// picking the item up: drop the pending move so the scroll goes ahead.
++			if(!this.moving && this.checkTimeout && (Math.abs(e.touches[0].pageX - touchStartX) > TOUCH_SLOP || Math.abs(e.touches[0].pageY - touchStartY) > TOUCH_SLOP)){
++				clearTimeout(this.checkTimeout);
++				this.checkTimeout = null;
++			}
+ 			
+ 			if(this.moving){
+ 				this.moveHover(e);
+@@ -15597,11 +15611,14 @@ class MoveRows extends Module{
+ 	}
+ 
+ 	bindTouchEvents(row, element){
+-		var startYMove = false, //shifting center position of the cell
++		var touchStartX = 0, touchStartY = 0, startYMove = false, //shifting center position of the cell
+ 		nextRow, prevRow, nextRowHeight, prevRowHeight, nextRowHeightLast, prevRowHeightLast;
+ 
+ 		element.addEventListener("touchstart", (e) => {
++			touchStartX = e.touches[0].pageX;
++			touchStartY = e.touches[0].pageY;
+ 			this.checkTimeout = setTimeout(() => {
++				this.checkTimeout = null;
+ 				this.touchMove = true;
+ 				nextRow = row.nextRow();
+ 				nextRowHeight = nextRow ? nextRow.getHeight()/2 : 0;
+@@ -15612,13 +15629,20 @@ class MoveRows extends Module{
+ 				startYMove = false;
+ 
+ 				this.startMove(e, row);
+-			}, this.checkPeriod);
++			}, Math.max(this.checkPeriod, TOUCH_HOLD_PERIOD));
+ 		}, {passive: true});
+ 		this.moving, this.toRow, this.toRowAfter;
+ 		element.addEventListener("touchmove", (e) => {
+ 
+ 			var diff, moveToRow;
+ 
++			// [trilium] A finger that travels before the hold period is up is scrolling, not
++			// picking the item up: drop the pending move so the scroll goes ahead.
++			if(!this.moving && this.checkTimeout && (Math.abs(e.touches[0].pageX - touchStartX) > TOUCH_SLOP || Math.abs(e.touches[0].pageY - touchStartY) > TOUCH_SLOP)){
++				clearTimeout(this.checkTimeout);
++				this.checkTimeout = null;
++			}
++
+ 			if(this.moving){
+ 				e.preventDefault();
+ 

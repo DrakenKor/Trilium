@@ -86,6 +86,7 @@ overrides:
 patchedDependencies:
   '@excalidraw/excalidraw@0.18.1': 859531a8ff622291b895d36bcd33e07ced6fcb3bcc90631ccaf776789b03f0c2
   html@1.0.0: 8acc288f8e9cde3c8a0c6e89f0b3796aeeb8251b88db9d1ba313e2352a591d68
+  tabulator-tables@6.5.3: 38cc5f0f5e9b9ce3c9c4d29f4eff3b7ff9f8eef34fcbdba9b6be5c0db24a9235
 
 importers:
 
@@ -355,7 +356,7 @@ importers:
         version: 2.8.1
       tabulator-tables:
         specifier: 6.5.3
-        version: 6.5.3
+        version: 6.5.3(patch_hash=38cc5f0f5e9b9ce3c9c4d29f4eff3b7ff9f8eef34fcbdba9b6be5c0db24a9235)
       temporal-polyfill:
         specifier: 1.0.5
         version: 1.0.5
@@ -975,7 +976,7 @@ importers:
         version: 3.0.1
       tabulator-tables:
         specifier: 6.5.3
-        version: 6.5.3
+        version: 6.5.3(patch_hash=38cc5f0f5e9b9ce3c9c4d29f4eff3b7ff9f8eef34fcbdba9b6be5c0db24a9235)
       temporal-polyfill:
         specifier: 1.0.5
         version: 1.0.5
@@ -24000,7 +24001,7 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
 
-  tabulator-tables@6.5.3: {}
+  tabulator-tables@6.5.3(patch_hash=38cc5f0f5e9b9ce3c9c4d29f4eff3b7ff9f8eef34fcbdba9b6be5c0db24a9235): {}
 
   tailwind-merge@2.6.0: {}
 
