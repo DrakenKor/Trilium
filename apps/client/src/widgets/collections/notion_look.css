@@ -510,3 +510,45 @@ body.desktop .ck-widget.include-note:has(.note-list-widget):not(.ck-widget_selec
    widget selected, or pointed at on desktop. */
 .ck-widget.include-note:has(.note-list-widget):not(.ck-widget_selected) .ck-widget__type-around { opacity: 0; }
 body.desktop .ck-widget.include-note:has(.note-list-widget):hover .ck-widget__type-around { opacity: 1; }
+
+/* ---------- List view: plain rows on the page, hairlines between ---------- */
+.note-list-widget-content > .nested-note-list.tn-card,
+.note-list-widget .nested-note-list.tn-card {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+
+    > .tn-card-body { gap: 0; background: transparent; }
+
+    .nested-note-list-item {
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid var(--nl-line);
+        border-radius: 0;
+        margin: 0;
+
+        &:hover { background: var(--nl-hover); }
+
+        h5 { font-size: 14px; font-weight: 500; margin: 0; }
+        .note-icon, .note-expander { color: var(--nl-faint); }
+        .note-book-title { color: var(--nl-text); }
+        .rendered-note-attributes { color: var(--nl-faint); font-size: 12px; }
+        .note-book-item-menu { color: var(--nl-faint); }
+    }
+}
+
+/* ---------- Grid view: Notion's gallery cards ---------- */
+.note-list-widget .note-book-card.tn-card-frame {
+    background: var(--main-background-color);
+    border: 0;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px var(--nl-line), 0 2px 4px color-mix(in srgb, var(--main-text-color) 6%, transparent);
+
+    &:hover { background: color-mix(in srgb, var(--main-text-color) 2%, var(--main-background-color)); }
+
+    .note-book-header { font-size: 14px; font-weight: 500; }
+    .note-icon { color: var(--nl-faint); }
+    .note-book-title { color: var(--nl-text); }
+    .note-book-item-menu { color: var(--nl-faint); }
+    .note-book-content { color: var(--nl-muted); font-size: 13px; }
+}

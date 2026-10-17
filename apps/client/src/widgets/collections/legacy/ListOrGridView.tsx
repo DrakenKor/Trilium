@@ -1,4 +1,5 @@
 import "./ListOrGridView.css";
+import "../notion_look.css";
 import { Card, CardFrame, CardSection } from "../../react/Card";
 
 import type { HighlightedTokenInfo } from "@triliumnext/commons";
