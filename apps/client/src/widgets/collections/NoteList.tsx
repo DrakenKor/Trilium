@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import FNote from "../../entities/fnote";
 import type { PrintReport } from "../../print";
 import froca from "../../services/froca";
+import type LoadResults from "../../services/load_results";
 import { subscribeToMessages, unsubscribeToMessage as unsubscribeFromMessage } from "../../services/ws";
 import { useGetContextDataFrom, useNoteContext, useNoteLabel, useNoteLabelBoolean, useNoteProperty, useTriliumEvent } from "../react/hooks";
 import { allViewTypes, ViewModeMedia, ViewModeProps, ViewTypeOptions } from "./interface";
@@ -219,8 +220,24 @@ export function useNoteIds(note: FNote | null | undefined, viewType: ViewTypeOpt
         refreshNoteIds();
     }, [ note, includeArchived, directChildrenOnly ]);
 
+    // A saved search's results are a snapshot taken when it ran, so a change that makes a note start
+    // or stop matching (e.g. ticking `#done` on a task listed by `#!done`) would otherwise only show
+    // after a reload. Re-run it, debounced, on any label, relation or branch change.
+    const searchRerunTimerRef = useRef<number>();
+    useEffect(() => () => window.clearTimeout(searchRerunTimerRef.current), []);
+
     // Refresh on alterations to the note subtree.
     useTriliumEvent("entitiesReloaded", ({ loadResults }) => {
+        if (note?.type === "search" && note.searchResultsLoaded && mayChangeSearchResults(loadResults)) {
+            const searchNoteId = note.noteId;
+            window.clearTimeout(searchRerunTimerRef.current);
+            searchRerunTimerRef.current = window.setTimeout(async () => {
+                await froca.loadSearchNote(searchNoteId);
+                refreshNoteIds();
+            }, SEARCH_RERUN_DEBOUNCE_MS);
+            return;
+        }
+
         if (note && (
             loadResults.getNoteReorderings().includes(note.noteId)
             || loadResults.getBranchRows().some(branch =>
@@ -260,6 +277,19 @@ export function useNoteIds(note: FNote | null | undefined, viewType: ViewTypeOpt
     }, [ note, noteIds, setNoteIds ]);
 
     return noteIds;
+}
+
+/** How long to wait after a change before re-running a saved search shown as a collection. */
+const SEARCH_RERUN_DEBOUNCE_MS = 300;
+
+/**
+ * Whether a change can alter which notes a saved search matches. Any note may come to match, so this
+ * is not limited to the current results. Content saves are left out (they are frequent while typing),
+ * as are the virtual branches a search run itself produces.
+ */
+export function mayChangeSearchResults(loadResults: LoadResults) {
+    return loadResults.getAttributeRows().length > 0
+        || loadResults.getBranchRows().some(branch => !branch.branchId.startsWith("virt-"));
 }
 
 /** Order-sensitive equality for note-id lists, used to skip no-op `noteIds` updates. */
