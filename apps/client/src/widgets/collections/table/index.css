@@ -99,3 +99,37 @@
         padding: 7px !important;
     }
 }
+
+/* On a phone the title column keeps its desktop width (often wider than the screen) and scrolls
+   away with the property columns, leaving rows that cannot be told apart. Narrow it and pin it to
+   the start edge, where it slides over the "#" column as the table is swiped. Done in CSS rather
+   than in the column definitions so the widths Tabulator persists, which desktop shares, are left
+   untouched. */
+body.mobile .tabulator {
+    --mobile-title-column-width: min(45vw, 200px);
+
+    .tabulator-col[tabulator-field="title"],
+    .tabulator-cell[tabulator-field="title"] {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: 11;
+        width: var(--mobile-title-column-width) !important;
+        min-width: 0 !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border-inline-end: 1px solid var(--main-border-color);
+    }
+
+    .tabulator-col[tabulator-field="title"] {
+        background-color: var(--main-background-color);
+    }
+
+    .tabulator-cell[tabulator-field="title"] {
+        background-color: inherit;
+    }
+
+    .tabulator-row {
+        background-color: var(--main-background-color);
+    }
+}
