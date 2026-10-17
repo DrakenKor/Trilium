@@ -283,9 +283,9 @@ body.mobile .table-view .tabulator {
     }
 }
 
-/* Shown on the row under the pointer, or always where there is no pointer to hover with. */
-.table-view .tabulator-row:hover .tabulator-cell[tabulator-field="title"] .table-open-note,
-body.mobile .table-view .tabulator-cell[tabulator-field="title"] .table-open-note {
+/* Shown on the row under the pointer. A phone has no pointer, and there a tap on the title opens
+   the note already, so the button would only take room from the title. */
+body.desktop .table-view .tabulator-row:hover .tabulator-cell[tabulator-field="title"] .table-open-note {
     display: inline-flex;
     align-items: center;
 }
