@@ -383,11 +383,21 @@ export default function EditableText({ note, parentComponent, ntxId, noteContext
             });
         };
 
+        // Typing a new line, or moving the caret, while the keyboard is already up changes neither
+        // the viewport nor the focus, so follow the selection too. It fires on every keystroke;
+        // `schedule` folds those into one measurement a frame, which only scrolls on overshoot.
+        const onSelectionChange = () => {
+            const focused = document.activeElement;
+            if (focused instanceof HTMLElement && focused.isContentEditable) schedule();
+        };
+
         window.visualViewport?.addEventListener("resize", schedule);
         document.addEventListener("focusin", schedule);
+        document.addEventListener("selectionchange", onSelectionChange);
         return () => {
             window.visualViewport?.removeEventListener("resize", schedule);
             document.removeEventListener("focusin", schedule);
+            document.removeEventListener("selectionchange", onSelectionChange);
             if (pending !== null) cancelAnimationFrame(pending);
         };
     }, []);
