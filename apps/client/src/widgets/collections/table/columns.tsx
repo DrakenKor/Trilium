@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { CellComponent, ColumnComponent, ColumnDefinition, EmptyCallback, FormatterParams, RowComponent, ValueBooleanCallback, ValueVoidCallback } from "tabulator-tables";
 
 import froca from "../../../services/froca.js";
+import { isMobile } from "../../../services/utils.js";
 import { safeUrlHref } from "../../../utils/url.js";
 import { applyLinkScheme, asLabelValues, formatLabelDate, LabelValueChips } from "../../attribute_widgets/label_value_display.jsx";
 import LabelValueInput from "../../attribute_widgets/label_value_input.jsx";
@@ -16,6 +17,7 @@ import { useGrowsUpwards } from "../../react/grows_upwards.js";
 import Icon from "../../react/Icon.jsx";
 import NoteAutocomplete from "../../react/NoteAutocomplete.jsx";
 import { renderReactWidget } from "../../react/react_utils.jsx";
+import { openRowNote } from "./open_row_note.js";
 import type { TableData } from "./rows.js";
 
 type ColumnType = LabelType | "relation";
@@ -161,10 +163,33 @@ export function buildColumnDefinitions({ info, movableRows, existingColumnData, 
             field: "title",
             title: "Title",
             editor: "input",
+            // On a phone a tap on the title opens the note, as a row does in Notion's app, rather than
+            // starting a rename that brings the keyboard up; the note itself can be renamed.
+            editable: () => !isMobile(),
+            cellClick: (e, cell) => {
+                if (!isMobile()) return;
+                openRowNote(e as MouseEvent, cell.getRow().getData().noteId, cell.getElement());
+            },
             formatter: wrapFormatter(({ cell }) => {
                 const { noteId, iconClass, colorClass } = cell.getRow().getData();
-                return <span className={`reference-link ${colorClass}`} data-href={`#root/${noteId}`}>
-                    <Icon icon={iconClass} />{" "}{cell.getValue()}
+                return <span className="table-title-cell">
+                    <span className={`reference-link ${colorClass}`} data-href={`#root/${noteId}`}>
+                        <Icon icon={iconClass} />{" "}{cell.getValue()}
+                    </span>
+                    <button
+                        type="button"
+                        className="table-open-note"
+                        // Down is held back so the cell neither takes focus nor opens its editor.
+                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openRowNote(e, noteId, e.currentTarget);
+                        }}
+                        onAuxClick={(e) => {
+                            e.stopPropagation();
+                            openRowNote(e, noteId, e.currentTarget);
+                        }}
+                    >Open</button>
                 </span>;
             }),
             width: 400,

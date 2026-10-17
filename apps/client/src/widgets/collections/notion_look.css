@@ -244,3 +244,48 @@ body.mobile .table-view .tabulator {
     .tabulator-col.tabulator-frozen-left:first-child .tabulator-col-title { visibility: hidden; }
     .tabulator-row .tabulator-cell.tabulator-frozen-left:first-child span:not(.bx) { display: none; }
 }
+
+/* ---------- Notion's OPEN button on a row ---------- */
+.table-view .tabulator-cell[tabulator-field="title"] {
+    .table-title-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .reference-link {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .table-open-note {
+        flex: 0 0 auto;
+        display: none;
+        padding: 0 6px;
+        height: 22px;
+        border: 0;
+        border-radius: 4px;
+        background: var(--main-background-color);
+        box-shadow: 0 0 0 1px var(--nl-line), 0 1px 2px color-mix(in srgb, var(--main-text-color) 8%, transparent);
+        color: var(--nl-muted);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        cursor: pointer;
+
+        &:hover { background: var(--nl-hover); color: var(--nl-text); }
+    }
+}
+
+/* Shown on the row under the pointer, or always where there is no pointer to hover with. */
+.table-view .tabulator-row:hover .tabulator-cell[tabulator-field="title"] .table-open-note,
+body.mobile .table-view .tabulator-cell[tabulator-field="title"] .table-open-note {
+    display: inline-flex;
+    align-items: center;
+}
