@@ -65,20 +65,35 @@ export default function MobileEditorToolbar({ inPopupEditor }: MobileEditorToolb
     );
 }
 
+/**
+ * How far the toolbar must be lifted above the bottom of its container so it sits on top of the
+ * keyboard: the part of the container that lies below the visual viewport. Both edges are in
+ * layout-viewport coordinates, which is what `getBoundingClientRect()` and
+ * `visualViewport.offsetTop` report on iOS.
+ */
+export function getObscuredHeight(containerBottom: number, viewport: { height: number; offsetTop: number }) {
+    return Math.max(0, Math.round(containerBottom - viewport.height - viewport.offsetTop));
+}
+
 function usePositioningOniOS(enabled: boolean, wrapperRef: MutableRef<HTMLDivElement | null>) {
     // Fallback path for plain mobile Safari (no Capacitor): the WKWebView
     // isn't resized when the keyboard opens, so visualViewport.height
     // shrinks while window.innerHeight stays the same. Push the toolbar
     // up by the difference. Under Capacitor `resize: native` both values
     // shrink together, so `obscured` is 0 and we leave CSS in charge.
+    //
+    // Safari also pans the visual viewport while the keyboard is up (to
+    // reveal the caret, or when the user scrolls), which changes
+    // `offsetTop` and fires `scroll` but not `resize`, so both are
+    // listened to. The container's own bottom is used rather than
+    // `innerHeight` so a page that Safari has scrolled is accounted for.
     const adjustPosition = useCallback(() => {
         if (!wrapperRef.current) return;
         const viewport = window.visualViewport;
         if (!viewport) return;
 
-        const obscured = Math.max(0, Math.round(
-            window.innerHeight - viewport.height - viewport.offsetTop
-        ));
+        const containerBottom = wrapperRef.current.parentElement?.getBoundingClientRect().bottom ?? window.innerHeight;
+        const obscured = getObscuredHeight(containerBottom, viewport);
 
         if (obscured <= 1) {
             wrapperRef.current.style.removeProperty("bottom");
@@ -89,12 +104,24 @@ function usePositioningOniOS(enabled: boolean, wrapperRef: MutableRef<HTMLDivEle
 
     useEffect(() => {
         if (!isIOS() || !enabled) return;
+        let pending: number | null = null;
+        const schedule = () => {
+            if (pending !== null) return;
+            pending = requestAnimationFrame(() => {
+                pending = null;
+                adjustPosition();
+            });
+        };
+
         // Run once in case the keyboard is already up when mounting
         // (e.g. returning from a dialog).
         adjustPosition();
-        window.visualViewport?.addEventListener("resize", adjustPosition);
+        window.visualViewport?.addEventListener("resize", schedule);
+        window.visualViewport?.addEventListener("scroll", schedule);
         return () => {
-            window.visualViewport?.removeEventListener("resize", adjustPosition);
+            window.visualViewport?.removeEventListener("resize", schedule);
+            window.visualViewport?.removeEventListener("scroll", schedule);
+            if (pending !== null) cancelAnimationFrame(pending);
         };
     }, [ enabled, adjustPosition ]);
 }
