@@ -168,7 +168,7 @@ export function buildColumnDefinitions({ info, movableRows, existingColumnData, 
                 </span>;
             }),
             width: 400,
-            titleFormatter: wrapFormatter(({ cell }) => <><Icon icon="bx bx-text" />{cell.getValue()}</>)
+            titleFormatter: wrapFormatter(() => <><Icon icon="bx bx-text" />Title</>)
         }
     ];
 
@@ -188,7 +188,8 @@ export function buildColumnDefinitions({ info, movableRows, existingColumnData, 
             rowHandle: false,
             ...labelTypeMappings[type ?? "text"],
             // The property's kind as a muted icon before its name, as Notion heads its columns.
-            titleFormatter: wrapFormatter(({ cell }) => <><Icon icon={columnTypeIcon(type, isMulti)} />{cell.getValue()}</>),
+            // Named from the definition: a header cell hands its formatter no value of its own.
+            titleFormatter: wrapFormatter(() => <><Icon icon={columnTypeIcon(type, isMulti)} />{title ?? name}</>),
             // A single option reads as the chip a set of them does, in its own colour.
             ...(type === "select" && !isMulti && { formatter: wrapFormatter(SelectFormatter) }),
             // What a cell's editor needs beyond the value itself, which for a select is the options
