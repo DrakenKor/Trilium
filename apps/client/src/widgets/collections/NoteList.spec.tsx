@@ -17,10 +17,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Component from "../../components/component";
 import type FNote from "../../entities/fnote";
 import type { EntityChange } from "../../server_types";
+import froca from "../../services/froca";
 import LoadResults from "../../services/load_results";
 import { buildNote, buildNotes } from "../../test/easy-froca";
 import { ParentComponent } from "../react/react_utils";
-import { CustomNoteList, useNoteIds } from "./NoteList";
+import { CustomNoteList, mayChangeSearchResults, useNoteIds } from "./NoteList";
 
 let currentNoteIds: string[] = [];
 
@@ -191,6 +192,84 @@ describe("useNoteIds refresh race", () => {
         expect(currentNoteIds).toEqual([ "child-a", "child-b", "child-new" ]);
         // A new reference is what makes React/`useEffect([noteIds])` downstream actually re-run.
         expect(currentNoteIds).not.toBe(afterMount);
+    });
+});
+
+function attributeEntitiesReloaded(noteId: string, name: string, value: string) {
+    const attributeId = `attr-${noteId}-${name}`;
+    const loadResults = new LoadResults([
+        {
+            entityName: "attributes",
+            entityId: attributeId,
+            entity: { attributeId, noteId, type: "label", name, value },
+            componentId: "comp-1"
+        } as unknown as EntityChange
+    ]);
+    loadResults.addAttribute(attributeId, "comp-1");
+    return loadResults;
+}
+
+describe("saved search shown as a collection", () => {
+    let container: HTMLElement | undefined;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        if (container) {
+            render(null, container);
+            container.remove();
+            container = undefined;
+        }
+    });
+
+    it("re-runs the search when a label changes, so a note that stops matching leaves the view", async () => {
+        const note = buildNote({ title: "Active tasks", type: "search" });
+        note.searchResultsLoaded = true;
+        let results = [ "child-a", "child-b" ];
+        note.getChildNoteIdsWithArchiveFiltering = vi.fn(async () => results);
+        // Ticking `#done` on child-a: the server no longer returns it.
+        const loadSearchNote = vi.spyOn(froca, "loadSearchNote").mockImplementation(async () => {
+            results = [ "child-b" ];
+            return { error: undefined };
+        });
+
+        const parent = new Component();
+        container = document.createElement("div");
+        document.body.appendChild(container);
+        await act(async () => {
+            render(
+                <ParentComponent.Provider value={parent}>
+                    <Harness note={note} />
+                </ParentComponent.Provider>,
+                container
+            );
+        });
+        await act(async () => {
+            await flushMicrotasks();
+        });
+        expect(currentNoteIds).toEqual([ "child-a", "child-b" ]);
+
+        await act(async () => {
+            await parent.handleEvent("entitiesReloaded", {
+                loadResults: attributeEntitiesReloaded("child-a", "done", "true")
+            });
+            await new Promise((resolve) => setTimeout(resolve, 400));
+            await flushMicrotasks();
+        });
+
+        expect(loadSearchNote).toHaveBeenCalledWith(note.noteId);
+        expect(currentNoteIds).toEqual([ "child-b" ]);
+    });
+
+    it("ignores the virtual branches a search run produces", () => {
+        expect(mayChangeSearchResults(attributeEntitiesReloaded("child-a", "done", "true"))).toBe(true);
+        expect(mayChangeSearchResults(branchEntitiesReloaded("todo-list", "child-new"))).toBe(true);
+
+        const branchId = "virt-search-child-a";
+        const virtual = new LoadResults([
+            { entityName: "branches", entityId: branchId, entity: { branchId, parentNoteId: "search", noteId: "child-a" }, componentId: "comp-1" } as unknown as EntityChange
+        ]);
+        virtual.addBranch(branchId, "comp-1");
+        expect(mayChangeSearchResults(virtual)).toBe(false);
     });
 });
 
