@@ -48,9 +48,12 @@ const labelTypeMappings: Record<ColumnType, Partial<ColumnDefinition>> = {
     },
     boolean: {
         // The same chip a set of flags wears, one chip for the one value, so a column of flags
-        // reads the same whether each note holds one or several. Toggling stays Tabulator's own.
+        // reads the same whether each note holds one or several.
         formatter: wrapFormatter(FlagFormatter),
-        editor: "tickCross",
+        // One click or tap flips the flag, as a checkbox does, rather than first opening an editor
+        // that takes a second one. setValue reports the change as an edit, which saves it.
+        cellClick: (_e, cell) => cell.setValue(!isFlagSet(cell.getValue())),
+        editor: undefined,
         // Values arrive as strings ("true"/"false") from stored labels but as real booleans
         // once toggled via the editor; the boolean sorter normalizes both, whereas the default
         // string sorter treats boolean `false` as empty and orders it inconsistently.
@@ -118,6 +121,11 @@ function relationTitle(row: RowComponent, column: ColumnComponent): string {
     const name = (column.getField() ?? "").slice("relations.".length);
     const { relationTitles } = row.getData() as Partial<TableData>;
     return relationTitles?.[name] ?? "";
+}
+
+/** Whether a flag cell holds "set": a stored label reads "true", a toggled cell holds `true`. */
+export function isFlagSet(value: unknown) {
+    return value === true || value === "true";
 }
 
 interface BuildColumnArgs {

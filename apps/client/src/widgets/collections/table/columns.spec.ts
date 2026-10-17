@@ -227,6 +227,28 @@ describe("buildColumnDefinitions — typed columns", () => {
     });
 });
 
+describe("buildColumnDefinitions — flag columns", () => {
+    it("flips a flag with one click, saving it as an edit, instead of opening an editor", () => {
+        const [ column ] = buildColumnDefinitions({
+            info: [ { name: "done", type: "boolean" } ],
+            movableRows: false,
+            existingColumnData: undefined,
+            rowNumberHint: 1
+        }).filter((candidate) => candidate.field === "labels.done");
+
+        expect(column?.editor).toBeUndefined();
+        const click = column?.cellClick;
+        if (typeof click !== "function") throw new Error("expected a click handler");
+
+        // Stored labels read "true"/"false", toggled cells hold booleans, unset cells nothing.
+        for (const [ value, flipped ] of [ [ "true", false ], [ true, false ], [ "false", true ], [ false, true ], [ undefined, true ] ] as const) {
+            const setValue = vi.fn();
+            click(new MouseEvent("click") as UIEvent, { getValue: () => value, setValue } as unknown as CellComponent);
+            expect(setValue).toHaveBeenCalledWith(flipped);
+        }
+    });
+});
+
 describe("buildColumnDefinitions — relation columns", () => {
     function relationColumn(isMulti: boolean) {
         return buildColumnDefinitions({
