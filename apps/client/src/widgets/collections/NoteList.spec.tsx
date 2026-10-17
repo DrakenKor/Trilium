@@ -229,18 +229,19 @@ describe("saved search shown as a collection", () => {
         // Ticking `#done` on child-a: the server no longer returns it.
         const loadSearchNote = vi.spyOn(froca, "loadSearchNote").mockImplementation(async () => {
             results = [ "child-b" ];
-            return { error: undefined };
+            return { error: null };
         });
 
         const parent = new Component();
-        container = document.createElement("div");
-        document.body.appendChild(container);
+        const mountPoint = document.createElement("div");
+        container = mountPoint;
+        document.body.appendChild(mountPoint);
         await act(async () => {
             render(
                 <ParentComponent.Provider value={parent}>
                     <Harness note={note} />
                 </ParentComponent.Provider>,
-                container
+                mountPoint
             );
         });
         await act(async () => {
