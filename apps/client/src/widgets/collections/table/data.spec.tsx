@@ -100,6 +100,36 @@ describe("useData", () => {
         expect(editorParams(undefined as never)).toMatchObject({ options: [ "Todo", "Done" ] });
     });
 
+    it("hands over the drag handle and the movable flag together, whichever refresh lands last", async () => {
+        // Tabulator decides as it creates the rows whether they are dragged by the handle column or
+        // by the whole row, so the first columns it is given must already carry the handle.
+        const { note, noteIds } = collection();
+        // The mount starts a refresh before the movable flag is known and another once it is. Let the
+        // first one land last, as a slower round-trip would, so a build from stale state shows.
+        const getNotes = froca.getNotes.bind(froca);
+        vi.spyOn(froca, "getNotes")
+            .mockImplementationOnce(async (ids) => {
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                return getNotes(ids);
+            });
+        const builds: { handle: unknown; movable: boolean }[] = [];
+        function Recorder() {
+            const data = useData(note, noteIds, undefined, { current: undefined }, resetNewAttributePosition);
+            if (data.columnDefs && data.rowData) {
+                builds.push({ handle: data.columnDefs[0].rowHandle, movable: data.movableRows });
+            }
+            return null;
+        }
+        await act(async () => render(<Recorder />, container));
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        });
+
+        expect(builds.length).toBeGreaterThan(0);
+        expect(builds.every((build) => build.handle === build.movable)).toBe(true);
+        expect(builds.at(-1)).toEqual({ handle: true, movable: true });
+    });
+
     it("refreshes only the rows for a row change, leaving the columns be", async () => {
         const { note, noteIds } = collection();
         await mount(note, noteIds);

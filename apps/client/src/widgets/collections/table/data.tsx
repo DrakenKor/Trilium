@@ -2,7 +2,7 @@ import type { ColumnDefinition } from "tabulator-tables";
 import FNote from "../../../entities/fnote";
 import { useNoteLabelBoolean, useNoteLabelInt, useTriliumEvent } from "../../react/hooks";
 import { ParentComponent } from "../../react/react_utils";
-import { useContext, useEffect, useState } from "preact/hooks";
+import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import getAttributeDefinitionInformation, { buildRowDefinitions, TableData } from "./rows";
 import froca from "../../../services/froca";
 import { buildColumnDefinitions } from "./columns";
@@ -27,6 +27,10 @@ export default function useData(note: FNote, noteIds: string[], viewConfig: Tabl
     const [ hasChildren, setHasChildren ] = useState<boolean>();
     const [ isSorted ] = useNoteLabelBoolean(note, "sorted");
     const [ movableRows, setMovableRows ] = useState(false);
+    // Whether the columns as last built carry the drag handle. Tabulator decides once, as the rows are
+    // created, whether a row is dragged by its handle or by the whole row (when no column is a handle),
+    // so the columns and the movable flag must be handed over together, from the same build.
+    const columnsMovableRef = useRef<boolean>();
 
     // Rows change far more often than the columns do, and rebuilding the columns is not free: they
     // are replaced wholesale in Tabulator, which resets the scroll — so a refresh only rebuilds
@@ -38,10 +42,12 @@ export default function useData(note: FNote, noteIds: string[], viewConfig: Tabl
         await froca.getNotes(noteIds);
 
         const { definitions: rowData, hasSubtree: hasChildren, rowNumber } = await buildRowDefinitions(note, info, includeArchived, maxDepth);
-        if (rebuildColumns) {
+        const movable = !isSorted && note.type !== "search" && !hasChildren;
+        if (rebuildColumns || movable !== columnsMovableRef.current) {
+            columnsMovableRef.current = movable;
             const columnDefs = buildColumnDefinitions({
                 info,
-                movableRows,
+                movableRows: movable,
                 existingColumnData: viewConfig?.tableData?.columns,
                 rowNumberHint: rowNumber,
                 position: newAttributePosition?.current ?? undefined,
@@ -57,9 +63,10 @@ export default function useData(note: FNote, noteIds: string[], viewConfig: Tabl
         }
         setRowData(rowData);
         setHasChildren(hasChildren);
+        setMovableRows(movable);
     }
 
-    useEffect(() => { refresh() }, [ note, noteIds, maxDepth, movableRows ]);
+    useEffect(() => { refresh() }, [ note, noteIds, maxDepth, isSorted ]);
 
     useTriliumEvent("entitiesReloaded", ({ loadResults}) => {
         if (glob.device === "print") return;
@@ -88,11 +95,6 @@ export default function useData(note: FNote, noteIds: string[], viewConfig: Tabl
             return;
         }
     });
-
-    // Identify if movable rows.
-    useEffect(() => {
-        setMovableRows(!isSorted && note.type !== "search" && !hasChildren);
-    }, [ isSorted, note, hasChildren ]);
 
     return { columnDefs, rowData, movableRows, hasChildren };
 }
