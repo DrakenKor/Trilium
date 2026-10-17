@@ -48,6 +48,9 @@ export default class RootContainer extends FlexContainer<BasicWidget> {
     render(): JQuery<HTMLElement> {
         if (utils.isMobile()) {
             window.visualViewport?.addEventListener("resize", () => this.#onMobileResize());
+            // Safari pans the visual viewport while the keyboard is up, which moves the part it
+            // covers without resizing anything.
+            window.visualViewport?.addEventListener("scroll", () => this.#updateKeyboardInset());
         }
 
         this.#initTheme();
@@ -132,6 +135,17 @@ export default class RootContainer extends FlexContainer<BasicWidget> {
         const isKeyboardOpened = windowHeight - viewportHeight > 150;
 
         this.$widget.toggleClass("virtual-keyboard-opened", isKeyboardOpened);
+        this.#updateKeyboardInset();
+    }
+
+    /**
+     * iOS Safari does not resize the page for the keyboard (it ignores `interactive-widget`), so the
+     * keyboard covers the bottom of every scroller, and a caret near the end of a note cannot be
+     * scrolled above it: there is nothing further to scroll to. Publish the covered height as
+     * `--keyboard-inset`, which scrollers turn into room at their end (see style.css).
+     */
+    #updateKeyboardInset() {
+        document.body.style.setProperty("--keyboard-inset", `${getKeyboardInset()}px`);
     }
 
     #setMaxContentWidth() {
@@ -204,3 +218,10 @@ export default class RootContainer extends FlexContainer<BasicWidget> {
     }
 }
 
+
+/** The height of the layout viewport the iOS keyboard covers, 0 elsewhere or with no keyboard. */
+export function getKeyboardInset(viewport = window.visualViewport, innerHeight = window.innerHeight) {
+    if (!isIOS() || !viewport) return 0;
+    const covered = Math.round(innerHeight - viewport.height - viewport.offsetTop);
+    return covered > 1 ? covered : 0;
+}

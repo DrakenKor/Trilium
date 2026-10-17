@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import RootContainer from "./root_container";
+import RootContainer, { getKeyboardInset } from "./root_container";
 
 /**
  * Stands in for `window.visualViewport`, which happy-dom does not implement. Only the parts the
@@ -66,5 +66,22 @@ describe("RootContainer", () => {
         resizeTo({ width: 800, height: 400 });
         resizeTo({ width: 800, height: 400, viewportHeight: 200 });
         expect($widget.hasClass("virtual-keyboard-opened")).toBe(true);
+    });
+});
+
+describe("getKeyboardInset", () => {
+    it("reports the part of the page the iOS keyboard covers, and nothing elsewhere", () => {
+        const userAgent = vi.spyOn(navigator, "userAgent", "get");
+
+        userAgent.mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
+        expect(getKeyboardInset({ height: 800, offsetTop: 0 } as VisualViewport, 800)).toBe(0);
+        expect(getKeyboardInset({ height: 500, offsetTop: 0 } as VisualViewport, 800)).toBe(300);
+        // Safari panned down by 120px: less of the page is under the keyboard.
+        expect(getKeyboardInset({ height: 500, offsetTop: 120 } as VisualViewport, 800)).toBe(180);
+
+        userAgent.mockReturnValue("Mozilla/5.0 (Linux; Android 15)");
+        expect(getKeyboardInset({ height: 500, offsetTop: 0 } as VisualViewport, 800)).toBe(0);
+
+        userAgent.mockRestore();
     });
 });

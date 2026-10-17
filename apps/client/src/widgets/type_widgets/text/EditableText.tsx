@@ -391,11 +391,21 @@ export default function EditableText({ note, parentComponent, ntxId, noteContext
             if (focused instanceof HTMLElement && focused.isContentEditable) schedule();
         };
 
-        window.visualViewport?.addEventListener("resize", schedule);
+        // The keyboard's own animation, and the room the root container makes for it, can still
+        // be settling when the viewport reports its new size: measure once more after both.
+        let settleTimer: number | undefined;
+        const onViewportResize = () => {
+            schedule();
+            window.clearTimeout(settleTimer);
+            settleTimer = window.setTimeout(schedule, 350);
+        };
+
+        window.visualViewport?.addEventListener("resize", onViewportResize);
         document.addEventListener("focusin", schedule);
         document.addEventListener("selectionchange", onSelectionChange);
         return () => {
-            window.visualViewport?.removeEventListener("resize", schedule);
+            window.visualViewport?.removeEventListener("resize", onViewportResize);
+            window.clearTimeout(settleTimer);
             document.removeEventListener("focusin", schedule);
             document.removeEventListener("selectionchange", onSelectionChange);
             if (pending !== null) cancelAnimationFrame(pending);

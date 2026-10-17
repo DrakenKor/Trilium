@@ -3485,3 +3485,13 @@ iframe.print-iframe {
 .tn-unknown-task-state .todo-list__label input[type="checkbox"] {
     outline: 3px solid var(--task-checkbox-unknown-state-color);
 }
+
+/* iOS: the keyboard covers the bottom of the page without resizing it. Room at the end of a
+   scroller, as tall as the covered part (--keyboard-inset, set by the root container), lets the
+   last lines of a note be scrolled above the keyboard. Zero whenever no keyboard is up. */
+body.mobile .scrolling-container::after {
+    content: "";
+    display: block;
+    height: var(--keyboard-inset, 0px);
+    flex-shrink: 0;
+}
