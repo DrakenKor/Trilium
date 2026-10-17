@@ -289,3 +289,138 @@ body.desktop .table-view .tabulator-row:hover .tabulator-cell[tabulator-field="t
     display: inline-flex;
     align-items: center;
 }
+
+/* ---------- A note's promoted attributes as Notion's property list ---------- */
+.promoted-attributes-widget .promoted-attributes-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    max-width: 720px;
+
+    .promoted-attribute-cell {
+        display: grid;
+        grid-template-columns: minmax(110px, 160px) minmax(0, 1fr);
+        align-items: center;
+        gap: 4px;
+        width: auto;
+        min-height: 34px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        box-shadow: none;
+
+        &:hover { background: var(--nl-hover); }
+        &:focus-within { background: transparent; }
+
+        > label::after { content: none; }
+
+        > label {
+            color: var(--nl-muted);
+            font-size: 14px;
+            font-weight: 400;
+            padding: 4px 8px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .input-group,
+        .promoted-attribute-values,
+        .tn-field {
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            width: 100%;
+        }
+
+        input.form-control,
+        select.form-control,
+        textarea.form-control {
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            color: var(--nl-text);
+            font-size: 14px;
+            padding: 4px 8px;
+            min-height: 30px;
+        }
+
+        input.form-control:focus,
+        select.form-control:focus {
+            background: var(--main-background-color);
+            box-shadow: 0 0 0 1px var(--nl-line), 0 2px 6px color-mix(in srgb, var(--main-text-color) 8%, transparent);
+            border-radius: 4px;
+        }
+
+        /* An empty value reads as Notion's faint "Empty" rather than an instruction. */
+        input.form-control::placeholder { color: var(--nl-faint); }
+        input.form-control:not(:focus)::placeholder { color: transparent; }
+        &:not(:focus-within):has(input.form-control:placeholder-shown) .promoted-attribute-values::before,
+        &:not(:focus-within):has(input.form-control:placeholder-shown) .input-group::before {
+            content: "Empty";
+            position: absolute;
+            inset-inline-start: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0 8px;
+            color: var(--nl-faint);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .promoted-attribute-values,
+        .input-group { position: relative; }
+
+        /* Number spinners are noise here. */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+    }
+}
+
+/* The folds over a note (its properties, the notes edited that day): quiet labels, as Notion shows
+   no heading over a page's properties. */
+.title-actions > .collapsible > .collapsible-title {
+    color: var(--nl-faint);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+body.mobile .promoted-attributes-widget .promoted-attributes-container .promoted-attribute-cell {
+    grid-template-columns: minmax(90px, 34%) minmax(0, 1fr);
+}
+
+/* An included collection is edited through its own controls; CKEditor's widget frame and grip only
+   show when the widget is selected (or, on desktop, pointed at). */
+.ck-widget.include-note:has(.note-list-widget):not(.ck-widget_selected) {
+    outline-color: transparent;
+
+    > .ck-widget__selection-handle { opacity: 0; }
+}
+
+body.desktop .ck-widget.include-note:has(.note-list-widget):not(.ck-widget_selected):hover {
+    outline: 1px solid var(--nl-line);
+
+    > .ck-widget__selection-handle { opacity: 1; }
+}
+
+/* CKEditor selects the first widget of a note it opens, which on a daily note is the included table:
+   while the editor is not focused, that selection needs no frame either. */
+.ck-editor__editable.ck-blurred .ck-widget.include-note:has(.note-list-widget).ck-widget_selected {
+    outline-color: transparent;
+
+    > .ck-widget__selection-handle { opacity: 0; }
+}
+
+/* Fields keep to their column rather than pushing the list into a sideways scroll. */
+.promoted-attributes-widget .promoted-attributes-container {
+    overflow-x: hidden;
+
+    .promoted-attribute-cell input.form-control,
+    .promoted-attribute-cell .tn-field,
+    .promoted-attribute-cell .input-group { min-width: 0; }
+}

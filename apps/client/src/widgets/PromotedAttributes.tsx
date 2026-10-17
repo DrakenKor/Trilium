@@ -1,4 +1,5 @@
 import "./PromotedAttributes.css";
+import "./collections/notion_look.css";
 
 import { DefinitionObject, extractAttributeDefinitionTypeAndName, UpdateAttributeResponse } from "@triliumnext/commons";
 import clsx from "clsx";
