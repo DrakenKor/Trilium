@@ -223,3 +223,24 @@ body.desktop .table-view .tabulator {
 
     &:hover { color: var(--nl-muted); background: var(--nl-hover); }
 }
+
+/* CKEditor rings a widget under the pointer in a thick grey; for an included collection a hairline
+   is enough. A selected widget keeps CKEditor's own ring. */
+.ck-widget.include-note:has(.note-list-widget):not(.ck-widget_selected):hover {
+    outline: 1px solid var(--nl-line);
+}
+
+/* On a phone the "#" column is only the handle a row is long-pressed by: its dots, no number, at
+   the width they need. Set in CSS, like the pinned title, so persisted widths are left alone. */
+body.mobile .table-view .tabulator {
+    .tabulator-col.tabulator-frozen-left:first-child,
+    .tabulator-row .tabulator-cell.tabulator-frozen-left:first-child {
+        width: 28px !important;
+        min-width: 0 !important;
+        padding-inline: 0;
+        overflow: hidden;
+    }
+
+    .tabulator-col.tabulator-frozen-left:first-child .tabulator-col-title { visibility: hidden; }
+    .tabulator-row .tabulator-cell.tabulator-frozen-left:first-child span:not(.bx) { display: none; }
+}
