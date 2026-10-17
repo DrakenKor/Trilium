@@ -57,7 +57,8 @@ body.dark-theme {
 
         .tabulator-col .tabulator-col-content { padding: 6px 8px; }
         .tabulator-col .tabulator-col-title { font-weight: 400; display: flex; align-items: center; gap: 6px; }
-        .tabulator-col .tabulator-col-title .tn-icon { color: var(--nl-faint); font-size: 1.05em; }
+        .tabulator-col .table-col-title { display: inline-flex; align-items: center; gap: 6px; }
+        .tabulator-col .table-col-title .tn-icon { color: var(--nl-faint); font-size: 1.05em; }
 
         /* The sort arrow only where it says something: on hover, or on the sorted column. */
         .tabulator-col[aria-sort="none"] .tabulator-col-sorter { opacity: 0; }
