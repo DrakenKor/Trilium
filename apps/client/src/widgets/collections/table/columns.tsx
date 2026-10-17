@@ -167,7 +167,8 @@ export function buildColumnDefinitions({ info, movableRows, existingColumnData, 
                     <Icon icon={iconClass} />{" "}{cell.getValue()}
                 </span>;
             }),
-            width: 400
+            width: 400,
+            titleFormatter: wrapFormatter(({ cell }) => <><Icon icon="bx bx-text" />{cell.getValue()}</>)
         }
     ];
 
@@ -186,6 +187,10 @@ export function buildColumnDefinitions({ info, movableRows, existingColumnData, 
             editor: "input",
             rowHandle: false,
             ...labelTypeMappings[type ?? "text"],
+            // The property's kind as a muted icon before its name, as Notion heads its columns.
+            titleFormatter: wrapFormatter(({ cell }) => <><Icon icon={columnTypeIcon(type, isMulti)} />{cell.getValue()}</>),
+            // A single option reads as the chip a set of them does, in its own colour.
+            ...(type === "select" && !isMulti && { formatter: wrapFormatter(SelectFormatter) }),
             // What a cell's editor needs beyond the value itself, which for a select is the options
             // it offers. Handed as a function because that is the shape Tabulator types for params
             // of an editor's own — which also means the options are answered for as each cell is
@@ -554,9 +559,35 @@ function FlagFormatter({ cell }: FormatterOpts) {
     // A stored label arrives as the text "true"/"false", but one just toggled through the tickCross
     // editor is a real boolean; the chip reads the stored spelling of either.
     const flag = typeof value === "boolean" ? String(value) : value;
-    if (typeof flag !== "string" || !flag) return <span />;
+    // An unset flag reads as an empty box, as a checkbox property does in Notion.
+    if (typeof flag !== "string" || !flag) return <LabelValueChips values={[ "false" ]} labelType="boolean" />;
 
     return <LabelValueChips values={[ flag ]} labelType="boolean" />;
+}
+
+/** A select cell as the one chip its option is. */
+function SelectFormatter({ cell }: FormatterOpts) {
+    const value = cell.getValue();
+    if (typeof value !== "string" || !value) return <span />;
+    return <LabelValueChips values={[ value ]} labelType="text" />;
+}
+
+/** The icon a column of the given kind is headed with. */
+export function columnTypeIcon(type: string | undefined, isMulti?: boolean) {
+    if (isMulti) return type === "relation" ? "bx bx-link-alt" : "bx bx-list-ul";
+    switch (type) {
+        case "select": return "bx bx-chevron-down-circle";
+        case "boolean": return "bx bx-checkbox-checked";
+        case "date":
+        case "datetime": return "bx bx-calendar";
+        case "time": return "bx bx-time";
+        case "number": return "bx bx-hash";
+        case "url": return "bx bx-link";
+        case "color": return "bx bx-palette";
+        case "relation": return "bx bx-link-alt";
+        case "textarea": return "bx bx-paragraph";
+        default: return "bx bx-text";
+    }
 }
 
 /**

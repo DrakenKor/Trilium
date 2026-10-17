@@ -1,4 +1,5 @@
 import "./index.css";
+import "../notion_look.css";
 
 import { createPortal } from "preact/compat";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "preact/hooks";

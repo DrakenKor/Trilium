@@ -1,4 +1,5 @@
 import "./label_value_display.css";
+import "../collections/notion_look.css";
 
 import { type LabelType } from "@triliumnext/commons";
 import clsx from "clsx";
@@ -105,6 +106,18 @@ export function ColorChip({ color }: { color: string }) {
  * The values a field holding several shows, read-only: the set as the very chips it is edited as, so
  * that reading and editing show the same thing.
  */
+/**
+ * One of nine option colours for a value, the same every time the value is shown, so a tag keeps its
+ * colour across rows and notes as an option does in Notion.
+ */
+export function chipColor(value: string) {
+    let hash = 0;
+    for (const char of value) {
+        hash = (Math.imul(hash, 31) + char.codePointAt(0)!) >>> 0;
+    }
+    return 1 + (hash % 9);
+}
+
 export function LabelValueChips({ values, labelType, className }: {
     values: readonly string[];
     labelType: LabelType | undefined;
@@ -124,6 +137,7 @@ export function LabelValueChips({ values, labelType, className }: {
                         key={value}
                         className={clsx("tn-chip", labelType === "boolean" &&
                             (value === "true" ? "label-flag-chip-set" : "label-flag-chip-unset"))}
+                        data-chip-color={labelType === "boolean" ? undefined : chipColor(value)}
                     >
                         <span>{renderLabelValue(value, labelType)}</span>
                     </span>

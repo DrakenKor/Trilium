@@ -1,0 +1,224 @@
+/* A Notion-like reading of the collection table: hairline grid, quiet headers, coloured option
+   chips, checkboxes for flags. Colours are mixed from the theme's own text and background colours,
+   so the same rules hold on a light and a dark theme. */
+body {
+    --nl-text: var(--main-text-color);
+    --nl-muted: color-mix(in srgb, var(--main-text-color) 55%, transparent);
+    --nl-faint: color-mix(in srgb, var(--main-text-color) 35%, transparent);
+    --nl-line: color-mix(in srgb, var(--main-text-color) 9%, transparent);
+    --nl-hover: color-mix(in srgb, var(--main-text-color) 4%, transparent);
+    --nl-accent: #2383e2;
+
+    /* Notion's option colours: a wash and the text that stands on it. */
+    --nl-c0-bg: color-mix(in srgb, var(--main-text-color) 8%, transparent); --nl-c0-fg: var(--main-text-color);
+    --nl-c1-bg: #e3e2e0; --nl-c1-fg: #32302c;
+    --nl-c2-bg: #eee0da; --nl-c2-fg: #442a1e;
+    --nl-c3-bg: #fadec9; --nl-c3-fg: #49290e;
+    --nl-c4-bg: #fdecc8; --nl-c4-fg: #402c1b;
+    --nl-c5-bg: #dbeddb; --nl-c5-fg: #1c3829;
+    --nl-c6-bg: #d3e5ef; --nl-c6-fg: #183347;
+    --nl-c7-bg: #e8deee; --nl-c7-fg: #412454;
+    --nl-c8-bg: #f5e0e9; --nl-c8-fg: #4c2337;
+    --nl-c9-bg: #ffe2dd; --nl-c9-fg: #5d1715;
+}
+
+body.dark-theme {
+    --nl-c1-bg: #5a5a5a; --nl-c1-fg: #ffffffd0;
+    --nl-c2-bg: #603b2c; --nl-c2-fg: #ffffffd0;
+    --nl-c3-bg: #854c1d; --nl-c3-fg: #ffffffd0;
+    --nl-c4-bg: #89632a; --nl-c4-fg: #ffffffd0;
+    --nl-c5-bg: #2b593f; --nl-c5-fg: #ffffffd0;
+    --nl-c6-bg: #28456c; --nl-c6-fg: #ffffffd0;
+    --nl-c7-bg: #492f64; --nl-c7-fg: #ffffffd0;
+    --nl-c8-bg: #69314c; --nl-c8-fg: #ffffffd0;
+    --nl-c9-bg: #6e3630; --nl-c9-fg: #ffffffd0;
+}
+
+/* ---------- The table ---------- */
+/* Through the table's own variables (stylesheets/table.css) where it has them. */
+.table-view .tabulator {
+    --col-header-text-color: var(--nl-muted);
+    --col-header-hover-background-color: var(--nl-hover);
+    --col-header-separator-border: 1px solid var(--nl-line);
+    --col-header-bottom-border: 1px solid var(--nl-line);
+    --row-delimiter-color: var(--nl-line);
+    --cell-vert-padding-size: 6px;
+    --cell-read-only-text-color: var(--nl-text);
+    /* No box drawn around a cell merely pointed at; an edited cell is ringed in the accent. */
+    --cell-editable-hover-outline-color: transparent;
+    --cell-editing-border-color: color-mix(in srgb, var(--nl-accent) 70%, transparent);
+    --cell-editing-background-color: var(--main-background-color);
+
+    font-size: 14px;
+
+    .tabulator-header {
+        border-top: 1px solid var(--nl-line);
+        font-weight: 400;
+
+        .tabulator-col .tabulator-col-content { padding: 6px 8px; }
+        .tabulator-col .tabulator-col-title { font-weight: 400; display: flex; align-items: center; gap: 6px; }
+        .tabulator-col .tabulator-col-title .tn-icon { color: var(--nl-faint); font-size: 1.05em; }
+
+        /* The sort arrow only where it says something: on hover, or on the sorted column. */
+        .tabulator-col[aria-sort="none"] .tabulator-col-sorter { opacity: 0; }
+        .tabulator-col[aria-sort="none"]:hover .tabulator-col-sorter { opacity: 0.5; }
+    }
+
+    .tabulator-tableholder { padding-top: 0; }
+
+    .tabulator-row .tabulator-cell {
+        border-inline-end: 1px solid var(--nl-line);
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .tabulator-row:hover {
+        background: color-mix(in srgb, var(--main-text-color) 3%, var(--main-background-color));
+    }
+
+    /* The page's own name, as Notion sets it: a touch heavier, its icon drawn back. */
+    .tabulator-cell[tabulator-field="title"] {
+        font-weight: 500;
+
+        .reference-link { color: inherit; text-decoration: none; }
+        .reference-link .tn-icon { color: var(--nl-faint); margin-inline-end: 2px; }
+    }
+
+    /* Row numbers drawn back. */
+    .tabulator-row .tabulator-cell.tabulator-frozen-left:first-child {
+        color: var(--nl-faint);
+        font-size: 12px;
+        justify-content: center;
+    }
+
+    /* Option chips stay on one line, clipped at the cell's edge, as Notion's do. */
+    .label-value-chips { flex-wrap: nowrap; overflow: hidden; }
+}
+
+/* The drag dots only on the row pointed at; on a phone they stay, being what is long-pressed. */
+body.desktop .table-view .tabulator {
+    .tabulator-row .tabulator-frozen .bx-dots-vertical-rounded { opacity: 0; transition: opacity 0.1s; }
+    .tabulator-row:hover .tabulator-frozen .bx-dots-vertical-rounded { opacity: 0.7; }
+}
+
+/* A collection included in a text note sits in the page as Notion's inline database does: no
+   framed box, and only as tall as its rows. */
+.include-note:has(.note-list-widget),
+.include-note:has(.note-list-widget) .include-note-wrapper {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+.include-note:has(.note-list-widget) .include-note-title {
+    font-weight: 600;
+    padding-inline: 0;
+}
+
+.include-note:has(.table-view) .include-note-content {
+    height: auto !important;
+    max-height: 60vh;
+}
+
+.include-note .table-view,
+.include-note .note-list-widget.full-height,
+.include-note .note-list-widget-content,
+.include-note .rendered-collection,
+.include-note .rendered-content {
+    height: auto !important;
+}
+
+/* ---------- Chips: Notion's square-cornered option pills ---------- */
+.label-value-chips > .tn-chip,
+.table-view .tn-chip {
+    border-radius: 3px;
+    padding: 0 6px;
+    min-height: 20px;
+    line-height: 20px;
+    font-size: 13px;
+    background-color: var(--nl-c0-bg);
+    color: var(--nl-c0-fg);
+    white-space: nowrap;
+}
+
+.tn-chip[data-chip-color="1"] { background-color: var(--nl-c1-bg); color: var(--nl-c1-fg); }
+.tn-chip[data-chip-color="2"] { background-color: var(--nl-c2-bg); color: var(--nl-c2-fg); }
+.tn-chip[data-chip-color="3"] { background-color: var(--nl-c3-bg); color: var(--nl-c3-fg); }
+.tn-chip[data-chip-color="4"] { background-color: var(--nl-c4-bg); color: var(--nl-c4-fg); }
+.tn-chip[data-chip-color="5"] { background-color: var(--nl-c5-bg); color: var(--nl-c5-fg); }
+.tn-chip[data-chip-color="6"] { background-color: var(--nl-c6-bg); color: var(--nl-c6-fg); }
+.tn-chip[data-chip-color="7"] { background-color: var(--nl-c7-bg); color: var(--nl-c7-fg); }
+.tn-chip[data-chip-color="8"] { background-color: var(--nl-c8-bg); color: var(--nl-c8-fg); }
+.tn-chip[data-chip-color="9"] { background-color: var(--nl-c9-bg); color: var(--nl-c9-fg); }
+
+/* A flag as a checkbox: an empty square, or a filled one with a tick. */
+.tn-chip.label-flag-chip-set,
+.tn-chip.label-flag-chip-unset {
+    width: 16px;
+    height: 16px;
+    min-height: 0;
+    padding: 0;
+    border-radius: 3px;
+    justify-content: center;
+    line-height: 1;
+}
+
+.tn-chip.label-flag-chip-set {
+    background-color: var(--nl-accent);
+
+    .label-flag-set { color: #fff; font-size: 14px; }
+}
+
+.tn-chip.label-flag-chip-unset {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--nl-faint);
+
+    .label-flag-unset { visibility: hidden; }
+}
+
+.table-view .tabulator-cell[tabulator-field^="labels."]:has(.label-flag-chip-set, .label-flag-chip-unset) {
+    cursor: pointer;
+}
+
+/* ---------- The view's toolbar ---------- */
+.note-list-widget .collection-properties {
+    border-bottom: 0;
+    padding-block: 4px;
+
+    .btn.select-button,
+    .btn.btn-secondary {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        color: var(--nl-muted);
+        font-size: 14px;
+        padding: 4px 8px;
+        border-radius: 4px;
+
+        &:hover { background: var(--nl-hover); color: var(--nl-text); }
+    }
+
+    /* The view's name reads as the tab it is. */
+    .left-container > .dropdown:first-child .btn.select-button {
+        color: var(--nl-text);
+        font-weight: 500;
+    }
+
+    /* "New" as Notion's one blue button. */
+    .btn[data-trigger-command="addNewRow"] {
+        background: var(--nl-accent);
+        color: #fff;
+        font-weight: 500;
+
+        &:hover { background: color-mix(in srgb, var(--nl-accent) 85%, black); color: #fff; }
+        .tn-icon { color: inherit; }
+    }
+}
+
+/* The "+ New" strip under the last row. */
+.table-view .tabulator-tableholder > .table-new-row-strip > .table-new-row {
+    color: var(--nl-faint);
+    font-size: 14px;
+
+    &:hover { color: var(--nl-muted); background: var(--nl-hover); }
+}

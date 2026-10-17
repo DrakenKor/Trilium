@@ -199,7 +199,7 @@ describe("buildColumnDefinitions — typed columns", () => {
         expect(url({ getValue: () => "https://example.com" } as CellComponent)).toBe("https://example.com");
     });
 
-    it("shows a single flag as the chip a set of flags wears, and an unset cell as nothing", () => {
+    it("shows a single flag as the chip a set of flags wears, and an unset cell as an empty box", () => {
         const [ column ] = buildColumnDefinitions({
             info: [ { name: "done", type: "boolean" } ],
             movableRows: false,
@@ -220,9 +220,9 @@ describe("buildColumnDefinitions — typed columns", () => {
         }
         expect(format(false).querySelector(".tn-chip")?.className).toContain("label-flag-chip-unset");
 
-        // An unset cell holds no flag at all, so it wears no chip either.
+        // An unset cell reads as an empty box, as a checkbox property does in Notion.
         for (const empty of [ "", undefined, null ]) {
-            expect(format(empty).querySelector(".tn-chip")).toBeNull();
+            expect(format(empty).querySelector(".tn-chip")?.className).toContain("label-flag-chip-unset");
         }
     });
 });
