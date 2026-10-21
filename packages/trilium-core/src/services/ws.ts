@@ -12,6 +12,13 @@ import AbstractBeccaEntity from "../becca/entities/abstract_becca_entity.js";
 let messagingProvider!: MessagingProvider;
 let lastSyncedPush: number;
 
+/**
+ * The most changes a client is sent to catch up with; one further behind is told to reload instead.
+ */
+const MAX_CATCH_UP_CHANGES = 2000;
+/** Connections already brought up to date, which their later pings need not be. See {@link buildCatchUpMessage}. */
+const caughtUpClients = new Set<string>();
+
 function init() {
     messagingProvider = getMessagingProvider();
 
@@ -23,7 +30,7 @@ function init() {
             log.info(`JS Info: ${message.info}`);
         } else if (message.type === "ping") {
             await syncMutexService.doExclusively(() => {
-                messagingProvider.sendMessageToClient(clientId, buildPingMessage());
+                messagingProvider.sendMessageToClient(clientId, buildCatchUpMessage(clientId, message.lastEntityChangeId) ?? buildPingMessage());
             });
         } else {
             log.error("Unrecognized message: ");
@@ -139,6 +146,47 @@ function buildPingMessage(): WebSocketMessage {
         type: "ping",
         protectedSessionAvailable: protectedSessionService.isProtectedSessionAvailable()
     };
+}
+
+/**
+ * The changes a client has not seen yet, answered to the first ping of each connection.
+ *
+ * Changes reach clients as they are made, by a broadcast to whoever is connected at that moment, so
+ * a client whose connection was down — a laptop asleep overnight, a dropped network — misses them
+ * and keeps showing what it had: a note moved by a scheduled ETAPI script stays where it was until
+ * the page is reloaded. Its pings report the last change it took in (`lastEntityChangeId`), and a
+ * reconnected client starts a new connection, so the first ping of each is where it can be brought
+ * up to date. Later pings are not: their changes are being broadcast anyway, and sending them a
+ * second time from here would only have the client apply them twice.
+ *
+ * Null when there is nothing to send.
+ */
+function buildCatchUpMessage(clientId: string, lastEntityChangeId: unknown): WebSocketMessage | null {
+    if (caughtUpClients.has(clientId)) {
+        return null;
+    }
+    // No end of connections is heard of, so the set is let go of now and then rather than kept
+    // forever; a client seen again after that is only asked about changes it already has.
+    if (caughtUpClients.size >= 1000) {
+        caughtUpClients.clear();
+    }
+    caughtUpClients.add(clientId);
+
+    if (typeof lastEntityChangeId !== "number" || lastEntityChangeId <= 0) {
+        return null;
+    }
+
+    const entityChangeIds = getSql().getColumn<number>(
+        "SELECT id FROM entity_changes WHERE id > ? ORDER BY id LIMIT ?",
+        [ lastEntityChangeId, MAX_CATCH_UP_CHANGES + 1 ]
+    );
+    if (entityChangeIds.length === 0) {
+        return null;
+    }
+    if (entityChangeIds.length > MAX_CATCH_UP_CHANGES) {
+        return { type: "reload-frontend", reason: "too many changes were made while disconnected" };
+    }
+    return buildFrontendUpdateMessage(entityChangeIds);
 }
 
 function buildFrontendUpdateMessage(entityChangeIds: number[]): WebSocketMessage | null {
